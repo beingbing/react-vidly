@@ -5,6 +5,7 @@ import ListGroup from "./common/listGroup";
 import { getMovies } from "../services/fakeMovieService";
 import { getGenres } from "../services/fakeGenreService";
 import { paginate } from "../utils/paginate";
+import _ from "lodash";
 
 class Movies extends Component {
   state = {
@@ -12,6 +13,7 @@ class Movies extends Component {
     currentPage: 1,
     pageSize: 4,
     genres: [],
+    sortColumn: { path: "title", order: "asc" },
   };
 
   componentDidMount() {
@@ -37,7 +39,16 @@ class Movies extends Component {
   handleGenreSelect = (genre) =>
     this.setState({ selectedGenre: genre, currentPage: 1 });
 
-  handleSort = (path) => console.log("path ", path);
+  handleSort = (path) => {
+    const sortColumn = this.state.sortColumn;
+    if (sortColumn.path === path) {
+      sortColumn.order = sortColumn.order === "asc" ? "desc" : "asc";
+    } else {
+      sortColumn.path = path;
+      sortColumn.order = "asc";
+    }
+    this.setState({ sortColumn });
+  };
 
   render() {
     const { length: len } = this.state.movies;
@@ -46,14 +57,15 @@ class Movies extends Component {
       currentPage,
       selectedGenre,
       movies: allMovies,
+      sortColumn,
     } = this.state;
 
     const filtered =
       selectedGenre && selectedGenre._id
         ? allMovies.filter((m) => m.genre._id === selectedGenre._id)
         : allMovies;
-    console.log("filtered ", filtered);
-    const movies = paginate(filtered, currentPage, pageSize);
+    const sorted = _.orderBy(filtered, [sortColumn.path], sortColumn.order);
+    const movies = paginate(sorted, currentPage, pageSize);
 
     if (!len) return <p>There are no movies to show</p>;
 
